@@ -1,47 +1,130 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-// Desafio Detective Quest
-// Tema 4 - Árvores e Tabela Hash
-// Este código inicial serve como base para o desenvolvimento das estruturas de navegação, pistas e suspeitos.
-// Use as instruções de cada região para desenvolver o sistema completo com árvore binária, árvore de busca e tabela hash.
+#define MAX_NOME 50
 
-int main() {
+// Estrutura de um nó da árvore binária 
+typedef struct No {
+    char nome[MAX_NOME];   // Nome da sala
+    struct No *esquerda;   // Ponteiro para a sala à esquerda
+    struct No *direita;    // Ponteiro para a sala à direita
+} No;
 
-    // 🌱 Nível Novato: Mapa da Mansão com Árvore Binária
-    //
-    // - Crie uma struct Sala com nome, e dois ponteiros: esquerda e direita.
-    // - Use funções como criarSala(), conectarSalas() e explorarSalas().
-    // - A árvore pode ser fixa: Hall de Entrada, Biblioteca, Cozinha, Sótão etc.
-    // - O jogador deve poder explorar indo à esquerda (e) ou à direita (d).
-    // - Finalize a exploração com uma opção de saída (s).
-    // - Exiba o nome da sala a cada movimento.
-    // - Use recursão ou laços para caminhar pela árvore.
-    // - Nenhuma inserção dinâmica é necessária neste nível.
+// Protótipos das funções
+No* criarNo(const char *nome);
+No* montarMansao();
+void percorrerMansao(No *hall);
 
-    // 🔍 Nível Aventureiro: Armazenamento de Pistas com Árvore de Busca
-    //
-    // - Crie uma struct Pista com campo texto (string).
-    // - Crie uma árvore binária de busca (BST) para inserir as pistas coletadas.
-    // - Ao visitar salas específicas, adicione pistas automaticamente com inserirBST().
-    // - Implemente uma função para exibir as pistas em ordem alfabética (emOrdem()).
-    // - Utilize alocação dinâmica e comparação de strings (strcmp) para organizar.
-    // - Não precisa remover ou balancear a árvore.
-    // - Use funções para modularizar: inserirPista(), listarPistas().
-    // - A árvore de pistas deve ser exibida quando o jogador quiser revisar evidências.
-
-    // 🧠 Nível Mestre: Relacionamento de Pistas com Suspeitos via Hash
-    //
-    // - Crie uma struct Suspeito contendo nome e lista de pistas associadas.
-    // - Crie uma tabela hash (ex: array de ponteiros para listas encadeadas).
-    // - A chave pode ser o nome do suspeito ou derivada das pistas.
-    // - Implemente uma função inserirHash(pista, suspeito) para registrar relações.
-    // - Crie uma função para mostrar todos os suspeitos e suas respectivas pistas.
-    // - Adicione um contador para saber qual suspeito foi mais citado.
-    // - Exiba ao final o “suspeito mais provável” baseado nas pistas coletadas.
-    // - Para hashing simples, pode usar soma dos valores ASCII do nome ou primeira letra.
-    // - Em caso de colisão, use lista encadeada para tratar.
-    // - Modularize com funções como inicializarHash(), buscarSuspeito(), listarAssociacoes().
-
-    return 0;
+// Função que cria dinamicamente uma nova sala (nó da árvore)
+No* criarNo(const char *nome) {
+    No *novo = (No *)malloc(sizeof(No));
+    if (novo == NULL) {
+        perror("Erro ao alocar memória");
+        exit(EXIT_FAILURE);
+    }
+    strcpy(novo->nome, nome);
+    novo->esquerda = NULL;
+    novo->direita = NULL;
+    return novo;
 }
 
+// Função que monta toda a estrutura fixa da mansão
+No* montarMansao() {
+    No *hall = criarNo("Hall de Entrada");
+    
+    // Nível 1
+    hall->esquerda = criarNo("Sala de Jantar");
+    hall->direita = criarNo("Biblioteca");
+
+    // Nível 2
+    hall->esquerda->esquerda = criarNo("Cozinha");
+    hall->esquerda->direita = criarNo("Escritorio");
+    hall->direita->esquerda = criarNo("Sala de Fumos");
+    hall->direita->direita = criarNo("Quarto Principal");
+
+    // Nível 3 (folhas da árvore)
+    hall->esquerda->esquerda->esquerda = criarNo("Despensa (Fim)");
+    hall->direita->direita->direita = criarNo("Banheiro Privativo (Fim)");
+
+    return hall;
+}
+
+// Função responsável por permitir que o jogador explore a mansão
+void percorrerMansao(No *hall) {
+    No *atual = hall;
+    char escolha[10];
+
+    if (atual == NULL) {
+        printf("Mapa da mansão vazio!\n");
+        return;
+    }
+
+    printf("Inicio da exploracao: Hall de Entrada.\n");
+
+    // Loop principal da exploração
+    while (atual != NULL) {
+        printf("\nVoce esta em: %s\n", atual->nome);
+
+        // Verifica se é nó-folha (não há caminhos disponíveis)
+        if (atual->esquerda == NULL && atual->direita == NULL) {
+            printf("Fim do caminho.\n");
+            break;
+        }
+
+        // Exibe os caminhos possíveis
+        printf("Para onde deseja ir? ");
+        
+        if (atual->esquerda != NULL) {
+            printf("[e] Esquerda");
+        }
+        if (atual->direita != NULL) {
+            printf(" | [d] Direita");
+        }
+        printf(" | [s] Sair: ");
+        
+        // Lê a escolha do usuário
+        if (scanf("%s", escolha) != 1) {
+            while (getchar() != '\n');
+            continue;
+        }
+
+        // Opção: sair
+        if (strcmp(escolha, "s") == 0) {
+            printf("\nSaindo da exploracao.\n");
+            break;
+
+        // Opção: esquerda
+        } else if (strcmp(escolha, "e") == 0) {
+            if (atual->esquerda != NULL) {
+                atual = atual->esquerda;
+            } else {
+                printf("Nao ha caminho pela esquerda.\n");
+            }
+
+        // Opção: direita
+        } else if (strcmp(escolha, "d") == 0) {
+            if (atual->direita != NULL) {
+                atual = atual->direita;
+            } else {
+                printf("Nao ha caminho pela direita.\n");
+            }
+
+        } else {
+            printf("Opcao invalida. Use 'e', 'd' ou 's'.\n");
+        }
+    }
+}
+
+int main() {
+    printf("--- Detective Quest: Nivel Novato ---\n");
+
+    // A árvore da mansão é construída automaticamente
+    No *mansao = montarMansao();
+    
+    // Inicia a exploração pelo Hall de Entrada
+    percorrerMansao(mansao);
+
+    // Memória não liberada para simplificação neste nível
+    return 0;
+}
